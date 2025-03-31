@@ -1,0 +1,77 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "march-madness"
+dynamic = ["version"]
+description = ''
+readme = "README.md"
+requires-python = ">=3.10"
+license = "MIT"
+keywords = []
+authors = [
+  { name = "John Ensley", email = "johnensley17@gmail.com" },
+]
+classifiers = [
+  "Development Status :: 4 - Beta",
+  "Programming Language :: Python",
+  "Programming Language :: Python :: 3.10",
+  "Programming Language :: Python :: 3.11",
+  "Programming Language :: Python :: 3.12",
+  "Programming Language :: Python :: Implementation :: CPython",
+  "Programming Language :: Python :: Implementation :: PyPy",
+]
+dependencies = [
+  "click",
+  "cmdstanpy>=1.2.5",
+]
+
+[project.urls]
+Documentation = "https://github.com/ensley/march-madness#readme"
+Issues = "https://github.com/ensley/march-madness/issues"
+Source = "https://github.com/ensley/march-madness"
+
+[project.scripts]
+march-madness = "march_madness.cli:march_madness"
+
+[tool.hatch.version]
+path = "src/march_madness/__about__.py"
+
+[tool.hatch.dirs.env]
+virtual = ".venv"
+
+[tool.hatch.envs.default]
+installer = "uv"
+extra-dependencies = [
+  "ipykernel>=6.29.5",
+]
+post-install-commands = [
+  "hatch run python -m ipykernel install --user --name march_madness --display-name {root}"
+]
+
+[tool.hatch.envs.types]
+extra-dependencies = [
+  "mypy>=1.0.0",
+]
+[tool.hatch.envs.types.scripts]
+check = "mypy --install-types --non-interactive {args:src/march_madness tests}"
+
+[tool.coverage.run]
+source_pkgs = ["march_madness", "tests"]
+branch = true
+parallel = true
+omit = [
+  "src/march_madness/__about__.py",
+]
+
+[tool.coverage.paths]
+march_madness = ["src/march_madness", "*/march-madness/src/march_madness"]
+tests = ["tests", "*/march-madness/tests"]
+
+[tool.coverage.report]
+exclude_lines = [
+  "no cov",
+  "if __name__ == .__main__.:",
+  "if TYPE_CHECKING:",
+]
