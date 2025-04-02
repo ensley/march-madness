@@ -25,6 +25,7 @@ classifiers = [
 dependencies = [
   "click",
   "cmdstanpy>=1.2.5",
+  "rich[jupyter]>=14.0.0",
 ]
 
 [project.urls]
