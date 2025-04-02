@@ -2,3 +2,5 @@
 .ipynb_checkpoints
 *.ipynb
 .idea
+src/march_madness/stan/
+!src/march_madness/stan/*.stan

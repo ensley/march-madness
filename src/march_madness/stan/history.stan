@@ -27,12 +27,6 @@ model {
     mu_def ~ std_normal();
     mu_home ~ std_normal();
 
-    // for (t in 1:2) {
-    //     for (n in 1:N) {
-    //         target += normal_lpdf(X[t,n] | ppm + mu_off[tid[t,n]] - mu_def[tid[2-t+1,n]] + mu_home[tid[t,n]] * H[t,n], sigma);
-    //     }
-    // }
-
     array[2] vector[N] mu_games = map_mu(mu_off, mu_def, mu_home, tid, H, ppm);
     for (t in 1:2) {
         target += normal_lpdf(X[t] | mu_games[t], sigma);
