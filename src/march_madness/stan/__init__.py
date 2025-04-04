@@ -1,4 +1,5 @@
 from pathlib import Path
+
 from cmdstanpy import CmdStanModel
 
 STAN_DIR = Path(__file__).parent.resolve()
