@@ -23,13 +23,19 @@ def prep_season_data(
 
     teams = pd.concat(
         [
-            df[["team1_link", "team1_name"]].rename(columns={"team1_link": "link", "team1_name": "name"}),
-            df[["team2_link", "team2_name"]].rename(columns={"team2_link": "link", "team2_name": "name"}),
+            df[["team1_link", "team1_name"]].rename(
+                columns={"team1_link": "link", "team1_name": "name"}
+            ),
+            df[["team2_link", "team2_name"]].rename(
+                columns={"team2_link": "link", "team2_name": "name"}
+            ),
         ],
     ).drop_duplicates(ignore_index=True)
 
     tids = (
-        pd.DataFrame({"link": teams["link"].unique()}).sort_values("link", ignore_index=True).reset_index(names="tid")
+        pd.DataFrame({"link": teams["link"].unique()})
+        .sort_values("link", ignore_index=True)
+        .reset_index(names="tid")
     )
     tids["tid"] += 1
 
@@ -42,7 +48,9 @@ def prep_season_data(
 
     df = (
         df.merge(teams, left_on="team1_link", right_on="link")
-        .merge(teams, left_on="team2_link", right_on="link", suffixes=("_team1", "_team2"))
+        .merge(
+            teams, left_on="team2_link", right_on="link", suffixes=("_team1", "_team2")
+        )
         .drop(columns=["link_team1", "link_team2", "name_team1", "name_team2"])
     )
 
@@ -52,13 +60,15 @@ def prep_season_data(
         "Y": df[["team1_score", "team2_score"]].values.T,
         "tid": df[["tid_team1", "tid_team2"]].values.T,
         "minutes": df["minutes_played"].values,
-        "V": df["team1_home_adv"].values,
+        "H": df[["team1_home_adv", "team2_home_adv"]].values.T,
     }
 
     return df, teams, data
 
 
-def collect_season_outputs(fit: cmdstanpy.CmdStanMCMC, teams: pd.DataFrame) -> pd.DataFrame:
+def collect_season_outputs(
+    fit: cmdstanpy.CmdStanMCMC, teams: pd.DataFrame
+) -> pd.DataFrame:
     results = pd.DataFrame(
         {v: fit.stan_variable(v).mean(axis=0) for v in ("mu_off", "mu_def", "mu_home")},
         index=teams["tid"].values,

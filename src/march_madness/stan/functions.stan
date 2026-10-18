@@ -35,6 +35,8 @@ functions {
         array[R-1,T] int advance = rep_array(0, R-1, T);
 
         for (r in 2:R) {
+	    print(wid);
+	    print(advance);
             int G = to_int(pow(2, R-r));
             array[2,G] int H = rep_array(0, 2, G);
             array[2*G] int winners = wid[r-1,1:(2*G)];

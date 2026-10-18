@@ -4,11 +4,7 @@ data {
     int N;
     int T;
     array[2,N] int tid;
-    array[N] int V;
-}
-
-transformed data {
-    array[2,N] int H = append_array(rep_array(0, 1, N), rep_array(V, 1));
+    array[2,N] int H;
 }
 
 parameters {

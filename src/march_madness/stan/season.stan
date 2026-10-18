@@ -6,11 +6,10 @@ data {
     array[2,N] int Y;
     array[2,N] int tid;
     array[N] int minutes;
-    array[N] int V;
+    array[2,N] int H;
 }
 
 transformed data {
-    array[2,N] int H = append_array(rep_array(0, 1, N), rep_array(V, 1));
     real ppm = overall_ppm(Y, minutes);
     array[2] vector[N] X = convert_points_to_ppm(Y, minutes);
 }

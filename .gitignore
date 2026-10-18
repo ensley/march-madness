@@ -3,7 +3,12 @@
 *.ipynb
 .idea/
 __pycache__/
-output/
+
+# Local datasets, raw scrape logs, and generated model outputs
+/data/
+/gamelogs*.jsonl
+/output/
+/outputs/
 
 # ignore all files in the stan folder...
 src/march_madness/stan/*
