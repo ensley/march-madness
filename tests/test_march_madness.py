@@ -53,7 +53,7 @@ def test_prepare_games_cli(tmp_path):
     duplicate = games.copy()
     duplicate["team1_score"] += 1
     pd.concat([games, duplicate]).to_parquet(output)
-    with patch("march_madness.cli.Season.sample") as sample:
+    with patch("march_madness.stan.Season.sample") as sample:
         result = runner.invoke(march_madness, ["fit-season", str(output), "--year", "2026"])
         sample.assert_not_called()
     assert result.exit_code != 0

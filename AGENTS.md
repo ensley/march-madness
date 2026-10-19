@@ -6,11 +6,14 @@
 
 `ingest.py` reconciles reports by school IDs; `backtest.py` evaluates frozen pre-tournament forecasts. `tests/` holds automated tests. `data/` contains local Parquet and tournament CSV inputs. Use ignored `output/` for generated results. Compiled Stan executables without extensions are also ignored; keep model sources in `.stan` files.
 
+`web/` serves the local Flask app: HTTP routes in `__init__.py`, artifact/model operations in `service.py`, and plain HTML/CSS/JavaScript in `templates/` and `static/`. Keep reusable model logic out of browser code.
+
 ## Build, Test, and Development Commands
 
 Use Python 3.10 or newer and install Hatch. Run commands from the repository root:
 
 - `hatch run march-madness --help`: inspect the local CLI and available commands.
+- `hatch run march-madness web`: start the local browser interface on port 8765.
 - `hatch run march-madness prepare-games --help`: inspect JSONL-to-Parquet reconciliation options.
 - `hatch build`: build source and wheel distributions using Hatchling.
 - `hatch fmt --check`: run the formatting and lint checks used in CI.
@@ -18,7 +21,7 @@ Use Python 3.10 or newer and install Hatch. Run commands from the repository roo
 - `hatch run types:check`: run the configured mypy checks over source and tests.
 - `hatch test --cover`: run tests with coverage, matching CI.
 
-Install CmdStan before importing the CLI or running tests: `python -m cmdstanpy.install_cmdstan --version 2.36.0 --cores 2`. CI uses this version; Windows also requires the installer’s `--compiler` option. Importing the Stan wrapper can compile models and requires a working C++ toolchain.
+Install CmdStan before fitting, simulating tournaments, or running model-dependent tests: `python -m cmdstanpy.install_cmdstan --version 2.36.0 --cores 2`. CI uses this version; Windows also requires the installer’s `--compiler` option. Importing the Stan wrapper can compile models and requires a working C++ toolchain; browsing saved web results imports it lazily.
 
 ## Coding Style & Naming Conventions
 

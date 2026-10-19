@@ -1,0 +1,84 @@
+{
+  "schemaVersion": 2,
+  "generatedAt": "2026-10-19T05:03:05.278183+00:00",
+  "title": "Design System: March Madness",
+  "extensions": {
+    "shadows": [],
+    "motion": [
+      {
+        "name": "control-state",
+        "value": "background-color 150ms ease-out",
+        "purpose": "Button hover states; disabled under prefers-reduced-motion."
+      }
+    ],
+    "breakpoints": [
+      {
+        "name": "compact-desktop",
+        "value": "1100px"
+      },
+      {
+        "name": "phone",
+        "value": "720px"
+      }
+    ]
+  },
+  "components": [
+    {
+      "name": "Primary button",
+      "kind": "button",
+      "refersTo": "button-primary",
+      "description": "Start a modeling operation.",
+      "html": "<button class=\"ds-primary\">Fit season model</button>",
+      "css": ".ds-primary{font:600 15px -apple-system,BlinkMacSystemFont,\"Segoe UI\",sans-serif;background:var(--accent);color:var(--surface);padding:10px 16px;min-height:42px;border:1px solid transparent;border-radius:6px;cursor:pointer;transition:background-color 150ms ease-out}.ds-primary:hover{background:var(--accent-hover)}.ds-primary:disabled{opacity:.55;cursor:wait}.ds-primary:focus-visible{outline:3px solid var(--accent);outline-offset:3px;}"
+    },
+    {
+      "name": "Secondary button",
+      "kind": "button",
+      "refersTo": "button-secondary",
+      "description": "Download data or open saved results.",
+      "html": "<button class=\"ds-secondary\">Open saved result</button>",
+      "css": ".ds-secondary{font:600 15px -apple-system,BlinkMacSystemFont,\"Segoe UI\",sans-serif;background:var(--surface);color:var(--ink);padding:10px 16px;min-height:42px;border:1px solid var(--line);border-radius:6px;cursor:pointer}.ds-secondary:hover{background:var(--soft)}.ds-secondary:focus-visible{outline:3px solid var(--accent);outline-offset:3px;}"
+    },
+    {
+      "name": "Search field",
+      "kind": "input",
+      "refersTo": "input",
+      "description": "Filter saved team ratings.",
+      "html": "<label class=\"ds-label\">Find a team<input class=\"ds-input\" type=\"search\" placeholder=\"Search teams\"></label>",
+      "css": ".ds-label{display:grid;gap:7px;font:600 13px -apple-system,BlinkMacSystemFont,\"Segoe UI\",sans-serif;color:var(--ink)}.ds-input{font:15px -apple-system,BlinkMacSystemFont,\"Segoe UI\",sans-serif;background:var(--surface);color:var(--ink);padding:10px 12px;border:1px solid #babfba;border-radius:5px;min-height:42px;caret-color:var(--accent)}.ds-input:focus-visible{outline:3px solid var(--accent);outline-offset:3px;}"
+    },
+    {
+      "name": "Task navigation",
+      "kind": "nav",
+      "description": "Consistent navigation across research tasks.",
+      "html": "<nav class=\"ds-nav\"><a href=\"#ratings\" aria-current=\"page\">Team ratings</a><a href=\"#matchups\">Matchups</a></nav>",
+      "css": ".ds-nav{display:grid;gap:6px;font:550 15px -apple-system,BlinkMacSystemFont,\"Segoe UI\",sans-serif}.ds-nav a{color:var(--muted);padding:10px 12px;border-radius:6px;text-decoration:none}.ds-nav a:hover{background:#e5e3dc;color:var(--ink)}.ds-nav a[aria-current]{background:#f9e6d9;color:var(--accent)}.ds-nav a:focus-visible{outline:3px solid var(--accent);outline-offset:3px;}"
+    },
+    {
+      "name": "Sampling diagnostics",
+      "kind": "custom",
+      "description": "Keep model-quality evidence adjacent to the selected fit.",
+      "html": "<div class=\"ds-diagnostics\"><span>Sampling checks passed</span><span>Max R-hat <strong>1.002</strong></span></div>",
+      "css": ".ds-diagnostics{display:flex;flex-wrap:wrap;gap:8px 24px;padding:16px 0;border-bottom:1px solid var(--line);font:13px -apple-system,BlinkMacSystemFont,\"Segoe UI\",sans-serif;color:var(--ink)}.ds-diagnostics span:first-child{color:var(--success)}.ds-diagnostics strong{font-weight:650;font-variant-numeric:tabular-nums}"
+    }
+  ],
+  "narrative": {
+    "northStar": "Scientific results worksheet",
+    "overview": "The implemented interface is a quiet local research workspace. Dense, readable results take priority over decorative dashboard elements. Controls use ordinary browser affordances and the same visual language across modeling tasks.",
+    "keyCharacteristics": [
+      "Source-aware tables with explicit units and diagnostic warnings.",
+      "Warm neutral surfaces, dark ink, and restrained orange actions.",
+      "Stable controls while background jobs update."
+    ],
+    "rules": [],
+    "dos": [
+      "Do preserve focus, loading, empty, and recoverable error states.",
+      "Do show the selected data source and sampling limitations.",
+      "Do support reduced motion and contained scrolling on phones."
+    ],
+    "donts": [
+      "Don't replace tables with decorative metric cards.",
+      "Don't rebuild unchanged live regions or focused controls during polling."
+    ]
+  }
+}

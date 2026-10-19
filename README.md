@@ -8,6 +8,7 @@
 ## Table of Contents
 
 - [Installation](#installation)
+- [Local web interface](#local-web-interface)
 - [Preparing game data](#preparing-game-data)
 - [Historical backtesting](#historical-backtesting)
 - [Model parameterization](#model-parameterization)
@@ -18,6 +19,48 @@
 ```console
 pip install march-madness
 ```
+
+## Local web interface
+
+From the repository root, start the browser workspace:
+
+```console
+hatch run march-madness web
+```
+
+Open `http://127.0.0.1:8765`. Use `--port 8766` for another port or
+`--workspace /path/to/march-madness` to select the workspace explicitly.
+No JavaScript build or separate frontend server is required.
+
+- **Team ratings:** select a saved fit, search and sort centered ratings, inspect
+  sampler diagnostics, and download the original results CSV.
+- **Matchups:** compare two teams on a neutral or home court using posterior
+  probabilities and expected margins per 40 minutes.
+- **Tournament:** choose a matching tournament CSV, simulate advancement chances,
+  and browse individual joint bracket draws round by round.
+- **Backtests:** compare saved Stan, Elo, and 50/50 forecasts, inspect calibration
+  counts, and review each season's coverage and diagnostic warnings.
+- **Fit a season:** select a reconciled dataset and season, configure sampling,
+  and start a background fit. Confirm the legacy home-first option only for
+  older inputs missing the team-2 home flag.
+
+The app discovers artifacts in `output/` and `outputs/` and inputs in `data/`.
+New fits, simulations, and job records are saved separately under `output/web/`.
+Keep the server running until a job finishes. Reloading the browser preserves
+jobs; restarting the server marks unfinished jobs interrupted so they can be
+retried. One fitting or simulation job runs at a time.
+
+Tournament CSVs contain `team ID, team name, seed` in bracket order, with optional
+`#` comment rows. Use IDs and names from the selected fit's downloadable results
+CSV. The number of teams must be a power of two; duplicate placeholders and team
+names that do not match the fit are rejected before simulation. The first version
+lists simulations created by the web app, which save their team order explicitly.
+The known school abbreviations VCU, LIU, and SMU are accepted alongside full names.
+
+Browsing saved results needs no C++ compilation. Fitting and tournament simulation
+require CmdStan and a working C++ toolchain. Old posterior layouts must be refitted
+before using the current bracket model. The server binds only to the local machine;
+it is intended for a single local researcher, not public hosting.
 
 ## Preparing game data
 

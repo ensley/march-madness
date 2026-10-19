@@ -17,7 +17,6 @@ from march_madness.__about__ import __version__
 from march_madness.backtest import run_backtest
 from march_madness.bracket import draw_bracket
 from march_madness.ingest import prepare_games_file
-from march_madness.stan import Bracket, Season
 
 console = Console()
 
@@ -43,6 +42,19 @@ stan_logger.addHandler(rich_handler)
 @click.version_option(version=__version__, prog_name="March Madness")
 def march_madness():
     pass
+
+
+@march_madness.command()
+@click.option(
+    "--workspace", type=click.Path(exists=True, file_okay=False, path_type=pathlib.Path), default=pathlib.Path(".")
+)
+@click.option("--port", type=click.IntRange(1024, 65535), default=8765, show_default=True)
+def web(workspace: pathlib.Path, port: int):
+    """Open the local web workspace at http://127.0.0.1:8765."""
+    from march_madness.web import create_app
+
+    click.echo(f"March Madness workspace: http://127.0.0.1:{port}")
+    create_app(workspace).run(host="127.0.0.1", port=port, debug=False, use_reloader=False, threaded=True)
 
 
 @march_madness.command()
@@ -132,6 +144,8 @@ def backtest(
     default=pathlib.Path("."),
 )
 def fit_season(games_file: pathlib.Path, year: int, outdir: pathlib.Path):
+    from march_madness.stan import Season
+
     outdir = outdir / f"march-madness-season-{datetime.now(tz=timezone.utc).strftime('%Y%m%d%H%M%S')}"
 
     try:
@@ -162,6 +176,8 @@ def fit_season(games_file: pathlib.Path, year: int, outdir: pathlib.Path):
     default=pathlib.Path("."),
 )
 def simulate_tournament(model_dir: pathlib.Path, tourney_file: pathlib.Path, outdir):
+    from march_madness.stan import Bracket
+
     season = cmdstanpy.from_csv(os.fspath(model_dir) + "/season-*.csv", method="sample")
     if not isinstance(season, cmdstanpy.CmdStanMCMC):
         msg = "Model unable to be read from disk."

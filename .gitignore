@@ -9,6 +9,12 @@ __pycache__/
 /gamelogs*.jsonl
 /output/
 /outputs/
+/dist/
+/.coverage
+/.coverage.*
+/htmlcov/
+/.impeccable/review/
+/.impeccable/mocks/
 
 # ignore all files in the stan folder...
 src/march_madness/stan/*

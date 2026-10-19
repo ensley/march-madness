@@ -1,0 +1,379 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="workspace-token" content="{{ token }}" />
+    <title>March Madness · Local workspace</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='app.css') }}" />
+    <script src="{{ url_for('static', filename='app.js') }}" defer></script>
+  </head>
+  <body>
+    <a class="skip" href="#main">Skip to content</a>
+    <aside class="sidebar">
+      <a class="brand" href="#ratings"
+        ><svg viewBox="0 0 32 32" width="32" height="32" aria-hidden="true">
+          <circle cx="16" cy="16" r="13" />
+          <path
+            d="M3 16h26M16 3v26M7 6c13 8 13 12 0 20M25 6c-13 8-13 12 0 20"
+          /></svg
+        ><span>March Madness</span></a
+      >
+      <p class="sidebar-note">Your basketball workspace</p>
+      <nav aria-label="Workspace">
+        <a href="#ratings" data-view="ratings" aria-current="page"
+          >Team ratings</a
+        >
+        <a href="#matchups" data-view="matchups">Matchups</a>
+        <a href="#tournament" data-view="tournament">Tournament</a>
+        <a href="#backtests" data-view="backtests">Backtests</a>
+        <a href="#fit" data-view="fit">Fit a season</a>
+      </nav>
+      <div class="sidebar-bottom">
+        <span class="local-dot" aria-hidden="true"></span> Running locally<br /><span
+          class="muted"
+          >Your data stays in this workspace.</span
+        >
+      </div>
+    </aside>
+    <main id="main">
+      <header class="topline">
+        <span>Season models & tournament forecasts</span
+        ><button id="refresh" class="quiet" type="button">
+          Refresh saved runs
+        </button>
+      </header>
+      <div id="global-error" class="notice error" role="alert" hidden></div>
+      <div id="job-status" class="notice job" hidden>
+        <span id="job-message" role="status" aria-live="polite"></span
+        ><button id="job-open" type="button" class="secondary" hidden>
+          Open saved result
+        </button>
+      </div>
+      <div id="catalog-problems" class="notice" hidden></div>
+
+      <section id="view-ratings" class="view">
+        <div class="page-heading">
+          <div>
+            <h1>Team ratings</h1>
+            <p>Explore the season. Find the teams with an edge.</p>
+          </div>
+          <a id="ratings-download" class="button secondary" href="#" hidden
+            >Download CSV</a
+          >
+        </div>
+        <div class="run-selector">
+          <label for="model">Saved season fit</label
+          ><select id="model">
+            <option value="">Loading saved fits…</option>
+          </select>
+          <p id="fit-source" class="help"></p>
+        </div>
+        <div
+          id="diagnostics"
+          class="diagnostics"
+          aria-label="Sampling diagnostics"
+        ></div>
+        <div class="section-heading">
+          <div>
+            <h2>Strength of the field</h2>
+            <p>
+              Posterior mean points per 40 minutes relative to the average team.
+              Higher is better.
+            </p>
+          </div>
+          <label class="search-label"
+            >Find a team<input
+              id="team-search"
+              type="search"
+              placeholder="Search teams"
+              autocomplete="off"
+          /></label>
+        </div>
+        <div id="ratings-empty" class="empty" hidden>
+          <h3>No saved season fits yet</h3>
+          <p>
+            Fit a season using a local game dataset. Your team ratings and
+            posterior draws will appear here.
+          </p>
+          <a href="#fit" class="button">Fit a season</a>
+        </div>
+        <div
+          id="ratings-table"
+          class="table-scroll"
+          tabindex="0"
+          role="region"
+          aria-label="Team ratings table"
+        ></div>
+        <div class="pagination">
+          <span id="ratings-count" aria-live="polite"></span>
+          <div>
+            <button id="previous-page" class="quiet" type="button">
+              Previous</button
+            ><button id="next-page" class="quiet" type="button">Next</button>
+          </div>
+        </div>
+        <p class="footnote">
+          Offense and defense are centered within this fit. Home advantage is
+          the team's expected scoring lift on its home court.
+        </p>
+      </section>
+
+      <section id="view-matchups" class="view" hidden>
+        <div class="page-heading">
+          <div>
+            <h1>Matchups</h1>
+            <p>Compare two teams using the full season posterior.</p>
+          </div>
+        </div>
+        <p class="context" id="matchup-context"></p>
+        <form id="matchup-form" class="form-panel">
+          <div class="form-grid">
+            <label>First team<select id="first" required></select></label
+            ><label>Second team<select id="second" required></select></label
+            ><label
+              >Court<select id="venue">
+                <option value="neutral">Neutral court</option>
+                <option value="first">First team's home</option>
+                <option value="second">Second team's home</option>
+              </select></label
+            >
+          </div>
+          <button type="submit">Compare teams</button>
+          <p class="help">
+            Probabilities integrate over posterior draws and game-to-game
+            scoring variation.
+          </p>
+        </form>
+        <div id="matchup-result" class="matchup-result" aria-live="polite">
+          <p class="muted">
+            Choose two teams to see their win probabilities and expected margin.
+          </p>
+        </div>
+      </section>
+
+      <section id="view-tournament" class="view" hidden>
+        <div class="page-heading">
+          <div>
+            <h1>Tournament</h1>
+            <p>See every team's chances, then explore one possible path.</p>
+          </div>
+        </div>
+        <p id="tournament-context" class="context"></p>
+        <form id="tournament-form" class="form-panel">
+          <div class="form-grid">
+            <label
+              >Bracket input<select
+                id="tournament-file"
+                required
+              ></select></label
+            ><label
+              >Random seed<input
+                id="tournament-seed"
+                type="number"
+                min="1"
+                max="4294967295"
+                value="20261018"
+                required
+            /></label>
+          </div>
+          <button type="submit">Simulate tournament</button>
+          <p class="help">
+            CSV rows define bracket order: team ID, team name, seed. IDs and
+            names must match the selected fit. Duplicate placeholders must be
+            resolved first.
+          </p>
+        </form>
+        <div class="section-heading">
+          <h2>Saved simulations</h2>
+          <label
+            >Simulation<select id="simulation">
+              <option value="">No simulations saved yet</option>
+            </select></label
+          >
+        </div>
+        <div id="simulation-result" hidden>
+          <div class="section-heading">
+            <div>
+              <h2>Advancement probabilities</h2>
+              <p>
+                Estimated from all saved draws, on neutral courts. Scroll the
+                table to see later rounds.
+              </p>
+            </div>
+            <a id="outcomes-download" class="button secondary" href="#"
+              >Download CSV</a
+            >
+          </div>
+          <div
+            id="outcomes-table"
+            class="table-scroll"
+            tabindex="0"
+            role="region"
+            aria-label="Tournament probabilities"
+          ></div>
+          <div class="section-heading">
+            <div>
+              <h2>A possible bracket</h2>
+              <p>
+                One posterior simulation, not a set of independent favorite
+                picks.
+              </p>
+            </div>
+            <form id="draw-form" class="inline-form">
+              <label
+                >Draw (starting at 0)<input
+                  id="draw"
+                  type="number"
+                  min="0"
+                  value="0"
+                  required /></label
+              ><button type="submit" class="secondary">Show draw</button>
+            </form>
+          </div>
+          <div
+            id="bracket"
+            class="bracket"
+            tabindex="0"
+            role="region"
+            aria-label="Simulated bracket by round"
+          ></div>
+        </div>
+        <div id="simulation-empty" class="empty">
+          <h3>Start with a bracket</h3>
+          <p>
+            Choose a matching season fit and tournament input above. New
+            simulations are saved separately from the original fit.
+          </p>
+        </div>
+      </section>
+
+      <section id="view-backtests" class="view" hidden>
+        <div class="page-heading">
+          <div>
+            <h1>Backtests</h1>
+            <p>How well did frozen pre-tournament forecasts perform?</p>
+          </div>
+          <a id="metrics-download" class="button secondary" href="#" hidden
+            >Download CSV</a
+          >
+        </div>
+        <div class="run-selector">
+          <label for="backtest-run">Saved evaluation</label
+          ><select id="backtest-run">
+            <option value="">Loading evaluations…</option>
+          </select>
+        </div>
+        <div id="backtest-empty" class="empty" hidden>
+          <h2>No saved backtests yet</h2>
+          <p>
+            Run <code>march-madness backtest</code> from the terminal. Saved
+            evaluations in output/ appear here after refreshing.
+          </p>
+        </div>
+        <div id="backtest-result" hidden>
+          <div class="section-heading">
+            <div>
+              <h2>Forecast performance</h2>
+              <p>
+                Lower log loss and Brier scores are better. Accuracy counts the
+                highest-probability outcome.
+              </p>
+            </div>
+            <label>Season<select id="evaluation-year"></select></label>
+          </div>
+          <div
+            id="metrics-table"
+            class="table-scroll"
+            tabindex="0"
+            role="region"
+            aria-label="Backtest comparison"
+          ></div>
+          <div class="evaluation-grid">
+            <div>
+              <h2>Calibration</h2>
+              <p>Do predicted chances match observed win rates?</p>
+              <div id="calibration-chart" class="chart"></div>
+              <p class="help">
+                Each point summarizes a probability bin; labels include its game
+                count. Small bins are noisy.
+              </p>
+            </div>
+            <div>
+              <h2>Sampling & coverage</h2>
+              <p>Each season is frozen before its first NCAA game.</p>
+              <div id="fold-diagnostics"></div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section id="view-fit" class="view" hidden>
+        <div class="page-heading">
+          <div>
+            <h1>Fit a season</h1>
+            <p>Turn reconciled game data into a saved season model.</p>
+          </div>
+        </div>
+        <form id="fit-form" class="form-panel">
+          <div class="form-grid">
+            <label>Game dataset<select id="dataset" required></select></label
+            ><label>Season<select id="season" required></select></label>
+          </div>
+          <p id="dataset-info" class="help"></p>
+          <label class="checkbox"
+            ><input id="legacy-home-first" type="checkbox" /> Legacy home-first
+            data: a missing team-2 home flag means zero</label
+          >
+          <details>
+            <summary>Sampling settings</summary>
+            <div class="form-grid settings">
+              <label
+                >Draws per chain<input
+                  id="samples"
+                  type="number"
+                  min="100"
+                  max="10000"
+                  value="4000"
+                  required /></label
+              ><label
+                >Warmup per chain<input
+                  id="warmup"
+                  type="number"
+                  min="100"
+                  max="10000"
+                  value="1000"
+                  required /></label
+              ><label
+                >Random seed<input
+                  id="fit-seed"
+                  type="number"
+                  min="1"
+                  max="4294967295"
+                  value="20261018"
+                  required
+              /></label>
+            </div>
+          </details>
+          <button type="submit">Fit season model</button>
+          <p class="help">
+            Uses regular-season and conference-tournament games, four chains,
+            and full-precision saved draws. Fitting may take several minutes.
+            Leave the server running; you can keep browsing.
+          </p>
+        </form>
+        <div class="section-heading"><h2>Job history</h2></div>
+        <div id="job-history" class="empty">
+          <p>No jobs started in this workspace yet.</p>
+        </div>
+      </section>
+      <footer>
+        March Madness
+        <span
+          >Local research workspace · Results depend on the selected data and
+          model.</span
+        >
+      </footer>
+    </main>
+  </body>
+</html>
