@@ -43,7 +43,7 @@ class HTTP429Error(BaseException):
         self.headers = response.headers
 
 
-class retry_if_http_429_error(retry_if_exception):
+class RetryIfHTTP429Error(retry_if_exception):
     def __init__(self):
         def is_http_429_error(exception):
             return isinstance(exception, HTTP429Error)
@@ -51,7 +51,7 @@ class retry_if_http_429_error(retry_if_exception):
         super().__init__(predicate=is_http_429_error)
 
 
-class wait_for_retry_after_header(wait_base):
+class WaitForRetryAfterHeader(wait_base):
     def __init__(self, fallback) -> None:
         self.fallback = fallback
 
@@ -77,14 +77,15 @@ def before_sleep(retry_state):
 
 
 @retry(
-    retry=retry_if_http_429_error(),
-    wait=wait_for_retry_after_header(fallback=wait_fixed(5)),
+    retry=RetryIfHTTP429Error(),
+    wait=WaitForRetryAfterHeader(fallback=wait_fixed(5)),
     stop=stop_after_attempt(3),
     before_sleep=before_sleep,
 )
 def get_page_respectfully(url):
     response = requests.get(
         url,
+        timeout=30,
         headers={"User-Agent": "Mozilla/5.0 (X11; Linux x86_64; rv:148.0) Gecko/20100101 Firefox/148.0"},
     )
     if response.status_code == requests.codes["too_many_requests"]:
@@ -114,22 +115,21 @@ class GameLog(pydantic.BaseModel, frozen=True):
 def get_gamelogs_url(school: School, year: int) -> str | None:
     if school.is_valid:
         return f"https://sports-reference.com/cbb/schools/{school.shortname}/women/{year}-gamelogs.html"
+    return None
 
 
 def find_data_stat(parent, attr: str) -> str | None:
     if tag := parent.find(attrs={"data-stat": attr}):
         return tag.text.strip()
+    return None
 
 
 def extract_team_id(tag) -> str:
     if link := tag.a.get("href"):
         result = re.findall(r"cbb/schools/([a-z\-]+)/", link)
-        if len(result) > 0:
+        if result:
             return result[0]
-        else:
-            return "null"
-    else:
-        return "null"
+    return "null"
 
 
 def get_schools(year: int) -> list[School]:
@@ -177,7 +177,7 @@ def get_gamelogs(school: School, year: int) -> list[GameLog]:
         gamelog = GameLog(
             school=school,
             opponent=opp,
-            date=datetime.datetime.strptime(find_data_stat(row, "date"), "%Y-%m-%d").date(),
+            date=datetime.date.fromisoformat(find_data_stat(row, "date")),
             game_type=find_data_stat(row, "game_type"),
             is_home=find_data_stat(row, "game_location") == "",
             is_neutral_site=find_data_stat(row, "game_location") == "N",

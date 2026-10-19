@@ -4,7 +4,17 @@ import numpy as np
 from rich.console import Console
 from rich.panel import Panel
 from rich.table import Table
-from rich.text import Text
+
+ROUND_32_INDEX = 0
+SWEET_16_INDEX = 1
+ELITE_8_INDEX = 2
+FINAL_FOUR_INDEX = 3
+FINAL_INDEX = 4
+CHAMPION_INDEX = 5
+
+
+def _team_or_tbd(teams: list[str], index: int) -> str:
+    return teams[index] if index < len(teams) else "TBD"
 
 
 def get_bracket_winners(predictions: np.ndarray, team_names: np.ndarray) -> list[list[str]]:
@@ -35,10 +45,7 @@ def get_bracket_winners(predictions: np.ndarray, team_names: np.ndarray) -> list
     current_teams = list(range(64))
     for round_idx in range(1, 6):
         # Find teams that advanced to this round (have 1s in previous columns)
-        advancing = []
-        for team_idx in current_teams:
-            if predictions[team_idx, round_idx - 1] == 1:
-                advancing.append(team_idx)
+        advancing = [team_idx for team_idx in current_teams if predictions[team_idx, round_idx - 1] == 1]
 
         # Now find winners of this round
         round_winners = []
@@ -73,9 +80,6 @@ def draw_bracket(predictions: np.ndarray, team_names: np.ndarray, console: Conso
     # Get winners for each round
     rounds = get_bracket_winners(predictions, team_names)
 
-    # Round names
-    round_names = ["Round of 64", "Round of 32", "Sweet 16", "Elite 8", "Final Four", "Championship"]
-
     # Build the bracket display
     # Left side: teams 0-31 (regions 1 & 2)
     # Right side: teams 32-63 (regions 3 & 4)
@@ -87,125 +91,6 @@ def draw_bracket(predictions: np.ndarray, team_names: np.ndarray, console: Conso
     def truncate(name: str, width: int = name_width) -> str:
         name = str(name)
         return name[:width] if len(name) > width else name.ljust(width)
-
-    # Build bracket lines
-    lines = []
-
-    # Helper to get team at specific position
-    def get_round1_team(idx: int) -> str:
-        return truncate(team_names[idx])
-
-    def get_round_winner(round_idx: int, match_idx: int) -> str:
-        """Get winner from a specific round and match."""
-        if round_idx >= len(rounds) or match_idx >= len(rounds[round_idx]):
-            return truncate("")
-        return truncate(rounds[round_idx][match_idx])
-
-    # Box drawing characters
-    H = "─"  # horizontal
-    V = "│"  # vertical
-    TL = "┌"  # top-left corner
-    TR = "┐"  # top-right corner
-    BL = "└"  # bottom-left corner
-    BR = "┘"  # bottom-right corner
-    LT = "├"  # left tee
-    RT = "┤"  # right tee
-
-    # Build left bracket (teams 0-31)
-    def build_region_left(start_team: int, region_name: str) -> list[str]:
-        """Build one region (16 teams) for left side of bracket."""
-        region_lines = []
-        region_lines.append(f"  {region_name}")
-        region_lines.append("")
-
-        # Calculate offsets for this region
-        team_offset = start_team
-        r1_offset = start_team // 2  # Round 1 winner offset
-        r2_offset = start_team // 4  # Round 2 winner offset
-        r3_offset = start_team // 8  # Round 3 winner offset
-        r4_offset = start_team // 16  # Elite 8 winner offset
-
-        for game in range(8):  # 8 first-round games per region
-            t1 = team_offset + game * 2
-            t2 = team_offset + game * 2 + 1
-            r1_match = r1_offset + game
-            r2_match = r2_offset + game // 2
-
-            team1 = get_round1_team(t1)
-            team2 = get_round1_team(t2)
-            r1_winner = get_round_winner(0, r1_match)
-
-            if game % 2 == 0:
-                r2_winner = get_round_winner(1, r2_match)
-
-            # Build the game lines
-            if game % 4 == 0:
-                r3_match = r3_offset + game // 4
-                r3_winner = get_round_winner(2, r3_match)
-
-            if game % 2 == 0:
-                # First game of a pair
-                region_lines.append(f" {team1} {TL}{H}")
-                region_lines.append(f"          {LT}{H} {r1_winner} {TL}{H}")
-                region_lines.append(f" {team2} {BL}{H}{RT}          {V}")
-                if game % 4 == 0:
-                    region_lines.append(f"             {LT}{H} {r2_winner} {TL}{H}")
-                else:
-                    region_lines.append(f"             {LT}{H} {r2_winner} {BL}{H} {r3_winner}")
-            else:
-                # Second game of a pair
-                region_lines.append(f" {team1} {TL}{H}{RT}          {V}")
-                region_lines.append(f"          {LT}{H} {r1_winner} {BL}{H}{RT}")
-                region_lines.append(f" {team2} {BL}{H}")
-                if game % 4 == 1:
-                    region_lines.append("")
-
-        return region_lines
-
-    def build_region_right(start_team: int, region_name: str) -> list[str]:
-        """Build one region (16 teams) for right side of bracket."""
-        region_lines = []
-        region_lines.append(f"  {region_name}")
-        region_lines.append("")
-
-        team_offset = start_team
-        r1_offset = start_team // 2
-        r2_offset = start_team // 4
-        r3_offset = start_team // 8
-
-        for game in range(8):
-            t1 = team_offset + game * 2
-            t2 = team_offset + game * 2 + 1
-            r1_match = r1_offset + game
-            r2_match = r2_offset + game // 2
-
-            team1 = get_round1_team(t1)
-            team2 = get_round1_team(t2)
-            r1_winner = get_round_winner(0, r1_match)
-
-            if game % 2 == 0:
-                r2_winner = get_round_winner(1, r2_match)
-
-            if game % 4 == 0:
-                r3_match = r3_offset + game // 4
-                r3_winner = get_round_winner(2, r3_match)
-
-            if game % 2 == 0:
-                region_lines.append(f"                      {H}{TR} {team1}")
-                region_lines.append(f"          {H}{TR} {r1_winner} {H}{RT}")
-                region_lines.append(f"          {V}          {H}{BL} {team2}")
-                if game % 4 == 0:
-                    region_lines.append(f"  {H}{TR} {r2_winner} {H}{RT}")
-                else:
-                    region_lines.append(f"  {r3_winner} {H}{TR} {r2_winner} {H}{RT}")
-            else:
-                region_lines.append(f"          {V}          {H}{TR} {team1}")
-                region_lines.append(f"          {H}{BL} {r1_winner} {H}{RT}")
-                region_lines.append(f"                      {H}{BL} {team2}")
-                if game % 4 == 1:
-                    region_lines.append("")
-
-        return region_lines
 
     # Create simplified bracket display using tables
     table = Table(title="NCAA Tournament Bracket", show_header=True, header_style="bold cyan")
@@ -227,7 +112,7 @@ def draw_bracket(predictions: np.ndarray, team_names: np.ndarray, console: Conso
     # Left side: teams 0-31, Right side: teams 32-63
 
     # Display champion at top
-    champion = rounds[5][0] if len(rounds) > 5 and len(rounds[5]) > 0 else "TBD"
+    champion = rounds[CHAMPION_INDEX][0] if len(rounds) > CHAMPION_INDEX and len(rounds[CHAMPION_INDEX]) > 0 else "TBD"
     console.print()
     console.print(Panel(f"[bold yellow]🏆 CHAMPION: {champion} 🏆[/bold yellow]", expand=False), justify="center")
     console.print()
@@ -238,24 +123,12 @@ def draw_bracket(predictions: np.ndarray, team_names: np.ndarray, console: Conso
     ff_table.add_column("Championship", justify="center", width=20)
     ff_table.add_column("Right Semifinal", justify="center", width=20)
 
-    f4_teams = rounds[3] if len(rounds) > 3 else ["TBD"] * 4
-    finals = rounds[4] if len(rounds) > 4 else ["TBD"] * 2
+    f4_teams = rounds[FINAL_FOUR_INDEX] if len(rounds) > FINAL_FOUR_INDEX else ["TBD"] * 4
+    finals = rounds[FINAL_INDEX] if len(rounds) > FINAL_INDEX else ["TBD"] * 2
 
-    ff_table.add_row(
-        f"{f4_teams[0] if len(f4_teams) > 0 else 'TBD'}",
-        "",
-        f"{f4_teams[2] if len(f4_teams) > 2 else 'TBD'}"
-    )
-    ff_table.add_row(
-        "vs",
-        f"{finals[0] if len(finals) > 0 else 'TBD'} vs {finals[1] if len(finals) > 1 else 'TBD'}",
-        "vs"
-    )
-    ff_table.add_row(
-        f"{f4_teams[1] if len(f4_teams) > 1 else 'TBD'}",
-        "",
-        f"{f4_teams[3] if len(f4_teams) > 3 else 'TBD'}"
-    )
+    ff_table.add_row(f"{_team_or_tbd(f4_teams, 0)}", "", f"{_team_or_tbd(f4_teams, 2)}")
+    ff_table.add_row("vs", f"{_team_or_tbd(finals, 0)} vs {_team_or_tbd(finals, 1)}", "vs")
+    ff_table.add_row(f"{_team_or_tbd(f4_teams, 1)}", "", f"{_team_or_tbd(f4_teams, 3)}")
 
     console.print(ff_table, justify="center")
     console.print()
@@ -271,9 +144,7 @@ def draw_bracket(predictions: np.ndarray, team_names: np.ndarray, console: Conso
         e8_idx = region_idx
 
         region_table = Table(
-            title=f"[bold]{region_names[region_idx]} REGION[/bold]",
-            show_header=True,
-            header_style="bold green"
+            title=f"[bold]{region_names[region_idx]} REGION[/bold]", show_header=True, header_style="bold green"
         )
         region_table.add_column("Seed", justify="center", width=4)
         region_table.add_column("Team", justify="left", width=name_width)
@@ -290,31 +161,25 @@ def draw_bracket(predictions: np.ndarray, team_names: np.ndarray, console: Conso
 
             # Determine which matchups this team is part of
             r1_match = r1_start + i // 2
-            r1_winner = rounds[0][r1_match] if len(rounds) > 0 else ""
+            r1_winner = rounds[ROUND_32_INDEX][r1_match] if len(rounds) > ROUND_32_INDEX else ""
 
             r2_match = r2_start + i // 4
-            r2_winner = rounds[1][r2_match] if len(rounds) > 1 else ""
+            r2_winner = rounds[SWEET_16_INDEX][r2_match] if len(rounds) > SWEET_16_INDEX else ""
 
             r3_match = r3_start + i // 8
-            r3_winner = rounds[2][r3_match] if len(rounds) > 2 else ""
+            r3_winner = rounds[ELITE_8_INDEX][r3_match] if len(rounds) > ELITE_8_INDEX else ""
 
-            e8_winner = rounds[3][e8_idx] if len(rounds) > 3 else ""
+            rounds[FINAL_FOUR_INDEX][e8_idx] if len(rounds) > FINAL_FOUR_INDEX else ""
 
             # Only show round winners at appropriate row positions
             r32_display = truncate(r1_winner) if i % 2 == 0 else ""
             s16_display = truncate(r2_winner) if i % 4 == 0 else ""
             e8_display = truncate(r3_winner) if i % 8 == 0 else ""
 
-            region_table.add_row(
-                str(seed),
-                team,
-                r32_display,
-                s16_display,
-                e8_display
-            )
+            region_table.add_row(str(seed), team, r32_display, s16_display, e8_display)
 
             # Add separator after each pair of teams
-            if i % 2 == 1 and i < 15:
+            if i % 2 == 1 and i < len(seed_order) - 1:
                 region_table.add_row("", "", "", "", "")
 
         console.print(region_table)
@@ -337,90 +202,26 @@ def draw_bracket_compact(predictions: np.ndarray, team_names: np.ndarray, consol
 
     rounds = get_bracket_winners(predictions, team_names)
 
-    # Abbreviate team names for compact view
-    def abbrev(name: str, width: int = 12) -> str:
-        name = str(name)
-        return name[:width] if len(name) > width else name.ljust(width)
-
-    # Box drawing
-    H, V = "─", "│"
-    TL, TR, BL, BR = "┌", "┐", "└", "┘"
-    LT, RT = "├", "┤"
-
-    width = 14
-
-    # Build left half (teams 0-31, 2 regions)
-    left_lines = []
-
-    for region in range(2):
-        region_start = region * 16
-        r1_start = region * 8
-        r2_start = region * 4
-        r3_start = region * 2
-
-        for game in range(8):
-            t1_idx = region_start + game * 2
-            t2_idx = region_start + game * 2 + 1
-            r1_idx = r1_start + game
-            r2_idx = r2_start + game // 2
-            r3_idx = r3_start + game // 4
-
-            t1 = abbrev(team_names[t1_idx])
-            t2 = abbrev(team_names[t2_idx])
-            r1 = abbrev(rounds[0][r1_idx]) if len(rounds) > 0 else ""
-            r2 = abbrev(rounds[1][r2_idx]) if len(rounds) > 1 else ""
-            r3 = abbrev(rounds[2][r3_idx]) if len(rounds) > 2 else ""
-
-            # Build lines for this matchup
-            if game % 4 == 0:
-                if game % 8 == 0:
-                    left_lines.append(f"{t1}{TL}{H}")
-                    left_lines.append(f"{' ' * width}{LT}{H}{r1}{TL}{H}")
-                    left_lines.append(f"{t2}{BL}{H}{RT}{' ' * width}{V}")
-                    left_lines.append(f"{' ' * (width + 3)}{LT}{H}{r2}{TL}{H}")
-                else:
-                    left_lines.append(f"{t1}{TL}{H}")
-                    left_lines.append(f"{' ' * width}{LT}{H}{r1}{TL}{H}")
-                    left_lines.append(f"{t2}{BL}{H}{RT}{' ' * width}{V}")
-                    left_lines.append(f"{' ' * (width + 3)}{LT}{H}{r2}{BL}{H}{r3}")
-            elif game % 4 == 1:
-                left_lines.append(f"{t1}{TL}{H}{RT}{' ' * width}{V}")
-                left_lines.append(f"{' ' * width}{LT}{H}{r1}{BL}{H}{RT}")
-                left_lines.append(f"{t2}{BL}{H}")
-                left_lines.append("")
-            elif game % 4 == 2:
-                left_lines.append(f"{t1}{TL}{H}")
-                left_lines.append(f"{' ' * width}{LT}{H}{r1}{TL}{H}")
-                left_lines.append(f"{t2}{BL}{H}{RT}{' ' * width}{V}")
-                left_lines.append(f"{' ' * (width + 3)}{LT}{H}{r2}{TL}{H}")
-            else:
-                left_lines.append(f"{t1}{TL}{H}{RT}{' ' * width}{V}")
-                left_lines.append(f"{' ' * width}{LT}{H}{r1}{BL}{H}{RT}")
-                left_lines.append(f"{t2}{BL}{H}")
-                left_lines.append("")
-
-        left_lines.append("")  # Region separator
-
     # Print the bracket
     console.print("[bold cyan]NCAA Tournament Bracket[/bold cyan]")
     console.print()
 
     # Champion
-    champion = rounds[5][0] if len(rounds) > 5 and rounds[5] else "TBD"
+    champion = rounds[CHAMPION_INDEX][0] if len(rounds) > CHAMPION_INDEX and rounds[CHAMPION_INDEX] else "TBD"
     console.print(f"[bold yellow]🏆 Champion: {champion}[/bold yellow]", justify="center")
     console.print()
 
     # Final Four
-    f4 = rounds[3] if len(rounds) > 3 else ["TBD"] * 4
-    finals = rounds[4] if len(rounds) > 4 else ["TBD"] * 2
+    f4 = rounds[FINAL_FOUR_INDEX] if len(rounds) > FINAL_FOUR_INDEX else ["TBD"] * 4
+    finals = rounds[FINAL_INDEX] if len(rounds) > FINAL_INDEX else ["TBD"] * 2
 
     console.print("[bold magenta]Final Four:[/bold magenta]")
-    console.print(f"  {f4[0] if len(f4) > 0 else 'TBD'} vs {f4[1] if len(f4) > 1 else 'TBD'} → {finals[0] if finals else 'TBD'}")
-    console.print(f"  {f4[2] if len(f4) > 2 else 'TBD'} vs {f4[3] if len(f4) > 3 else 'TBD'} → {finals[1] if len(finals) > 1 else 'TBD'}")
+    console.print(f"  {_team_or_tbd(f4, 0)} vs {_team_or_tbd(f4, 1)} → {finals[0] if finals else 'TBD'}")
+    console.print(f"  {_team_or_tbd(f4, 2)} vs {_team_or_tbd(f4, 3)} → {_team_or_tbd(finals, 1)}")
     console.print()
 
     # Elite 8
-    e8 = rounds[3] if len(rounds) > 3 else ["TBD"] * 4
+    e8 = rounds[FINAL_FOUR_INDEX] if len(rounds) > FINAL_FOUR_INDEX else ["TBD"] * 4
     console.print("[bold green]Elite Eight:[/bold green]")
     for i, team in enumerate(e8):
         console.print(f"  {['East', 'West', 'South', 'Midwest'][i]}: {team}")
@@ -433,8 +234,8 @@ def draw_bracket_compact(predictions: np.ndarray, team_names: np.ndarray, consol
 
         region_start = region_idx * 16
         r1_start = region_idx * 8
-        r2_start = region_idx * 4
-        r3_start = region_idx * 2
+        region_idx * 4
+        region_idx * 2
 
         for game in range(8):
             t1_idx = region_start + game * 2
@@ -443,7 +244,7 @@ def draw_bracket_compact(predictions: np.ndarray, team_names: np.ndarray, consol
 
             t1 = team_names[t1_idx]
             t2 = team_names[t2_idx]
-            winner = rounds[0][r1_idx] if rounds else "TBD"
+            winner = rounds[ROUND_32_INDEX][r1_idx] if rounds else "TBD"
 
             console.print(f"  {t1} vs {t2} → [cyan]{winner}[/cyan]")
         console.print()
@@ -468,10 +269,7 @@ if __name__ == "__main__":
     for round_idx in range(1, 6):
         advancing = np.where(predictions[:, round_idx - 1] == 1)[0]
         for i in range(0, len(advancing), 2):
-            if i + 1 < len(advancing):
-                winner = np.random.choice([advancing[i], advancing[i + 1]])
-            else:
-                winner = advancing[i]
+            winner = np.random.choice([advancing[i], advancing[i + 1]]) if i + 1 < len(advancing) else advancing[i]
             predictions[winner, round_idx] = 1
 
     console = Console()

@@ -224,7 +224,7 @@ def simulate_tournament(model_dir: pathlib.Path, tourney_file: pathlib.Path, out
     required=True,
     help="Which draw to use",
 )
-def print_simulation(tourney_file: pathlib.Path, bracket_dir: pathlib.Path, compact: bool, n: int):
+def print_simulation(tourney_file: pathlib.Path, bracket_dir: pathlib.Path, n: int, *, compact: bool):
     """Display the tournament bracket with predicted winners."""
     # Extract team names from tourney file (second column)
     with open(tourney_file, newline="") as f:
