@@ -12,9 +12,15 @@ transformed data {
 
 parameters {
     real<lower=0> sigma;
-    vector[T] mu_off;
-    vector[T] mu_def;
+    real mu_scoring;
+    sum_to_zero_vector[T] mu_off_centered;
+    sum_to_zero_vector[T] mu_def_centered;
     vector[T] mu_home;
+}
+
+transformed parameters {
+    vector[T] mu_off = mu_off_centered + mu_scoring / 2;
+    vector[T] mu_def = mu_def_centered - mu_scoring / 2;
 }
 
 generated quantities {

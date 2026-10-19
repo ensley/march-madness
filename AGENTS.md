@@ -4,13 +4,14 @@
 
 `src/march_madness/` contains the Python package. CLI commands live in `cli/__init__.py`; `transform.py` prepares game data and collects model outputs; `tournament.py` reads tournament inputs. Bracket rendering and scraping live in `bracket.py` and `scrape.py`. The `stan/` directory contains season, prediction, and bracket models plus shared Stan functions.
 
-`tests/` holds automated tests. `data/` contains game Parquet files and tournament CSV inputs. Use the ignored `output/` directory for generated results. Compiled Stan executables without extensions are also ignored; keep model sources in `.stan` files.
+`ingest.py` reconciles reports by school IDs; `backtest.py` evaluates frozen pre-tournament forecasts. `tests/` holds automated tests. `data/` contains local Parquet and tournament CSV inputs. Use ignored `output/` for generated results. Compiled Stan executables without extensions are also ignored; keep model sources in `.stan` files.
 
 ## Build, Test, and Development Commands
 
 Use Python 3.10 or newer and install Hatch. Run commands from the repository root:
 
 - `hatch run march-madness --help`: inspect the local CLI and available commands.
+- `hatch run march-madness prepare-games --help`: inspect JSONL-to-Parquet reconciliation options.
 - `hatch build`: build source and wheel distributions using Hatchling.
 - `hatch fmt --check`: run the formatting and lint checks used in CI.
 - `hatch fmt`: apply formatting and lint fixes.

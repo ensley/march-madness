@@ -1,7 +1,6 @@
 import datetime
 import re
 import time
-from typing import Any
 
 import pydantic
 import requests
@@ -86,9 +85,7 @@ def before_sleep(retry_state):
 def get_page_respectfully(url):
     response = requests.get(
         url,
-        headers={
-            "User-Agent": "Mozilla/5.0 (X11; Linux x86_64; rv:148.0) Gecko/20100101 Firefox/148.0"
-        },
+        headers={"User-Agent": "Mozilla/5.0 (X11; Linux x86_64; rv:148.0) Gecko/20100101 Firefox/148.0"},
     )
     if response.status_code == requests.codes["too_many_requests"]:
         raise HTTP429Error(response)
@@ -112,21 +109,6 @@ class GameLog(pydantic.BaseModel, frozen=True):
     score: int
     opp_score: int
     ot_periods: int
-
-    def __eq__(self, other: Any) -> bool:
-        if isinstance(other, GameLog):
-            return (
-                self.school == other.opponent
-                and self.opponent == other.school
-                and self.date == other.date
-                and self.score == other.opp_score
-                and self.opp_score == other.score
-            )
-        else:
-            return super().__eq__(other)
-
-    def __hash__(self):
-        return hash(self.date)
 
 
 def get_gamelogs_url(school: School, year: int) -> str | None:
@@ -163,9 +145,7 @@ def get_gamelogs(school: School, year: int) -> list[GameLog]:
     url = get_gamelogs_url(school, year)
     soup = BeautifulSoup(get_page_respectfully(url), "html.parser")
     rows = soup.find_all(
-        lambda tag: tag.name == "tr"
-        and tag.has_attr("id")
-        and tag.get("id", "").startswith("team_game_log.")
+        lambda tag: tag.name == "tr" and tag.has_attr("id") and tag.get("id", "").startswith("team_game_log.")
     )
 
     gamelogs = []
@@ -197,9 +177,7 @@ def get_gamelogs(school: School, year: int) -> list[GameLog]:
         gamelog = GameLog(
             school=school,
             opponent=opp,
-            date=datetime.datetime.strptime(
-                find_data_stat(row, "date"), "%Y-%m-%d"
-            ).date(),
+            date=datetime.datetime.strptime(find_data_stat(row, "date"), "%Y-%m-%d").date(),
             game_type=find_data_stat(row, "game_type"),
             is_home=find_data_stat(row, "game_location") == "",
             is_neutral_site=find_data_stat(row, "game_location") == "N",
@@ -222,9 +200,7 @@ def scrape_gamelogs(year: int):
             yield from school_gamelogs
             time.sleep(5)
             progress.update(task_id, advance=1)
-            console.log(
-                f"[magenta]{school.name}[/] - [i]{len(school_gamelogs)} games found[/i]"
-            )
+            console.log(f"[magenta]{school.name}[/] - [i]{len(school_gamelogs)} games found[/i]")
 
 
 class Game(pydantic.BaseModel):
